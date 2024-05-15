@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct Process {
+    int id;
+    int arrivalTime;
+    int burstTime;
+    int remainingTime;
+    int startTime; // For SRTF
+    int completionTime; // For FCFS
+    int waitingTime;
+    int turnaroundTime;
+};
+
+void srtf(struct Process processes[], int n) {
+    int currentTime = 0;
+    int completedProcesses = 0;
+    int shortestRemainingTimeIndex;
+
+    while (completedProcesses < n) {
+        shortestRemainingTimeIndex = -1;
+        int shortestRemainingTime = INT_MAX;
+
+        for (int i = 0; i < n; ++i) {
+            if (processes[i].arrivalTime <= currentTime && processes[i].remainingTime > 0) {
+                if (processes[i].remainingTime < shortestRemainingTime) {
+                    shortestRemainingTime = processes[i].remainingTime;
+                    shortestRemainingTimeIndex = i;
+                }
+            }
+        }
+
+        if (shortestRemainingTimeIndex == -1) {
+            currentTime++;
+        } else {
+            if (processes[shortestRemainingTimeIndex].startTime == -1) {
+                processes[shortestRemainingTimeIndex].startTime = currentTime;
+            }
+
+            processes[shortestRemainingTimeIndex].remainingTime--;
+            currentTime++;
+
+            if (processes[shortestRemainingTimeIndex].remainingTime == 0) {
+                processes[shortestRemainingTimeIndex].completionTime = currentTime;
+                processes[shortestRemainingTimeIndex].turnaroundTime = processes[shortestRemainingTimeIndex].completionTime - processes[shortestRemainingTimeIndex].arrivalTime;
+                processes[shortestRemainingTimeIndex].waitingTime = processes[shortestRemainingTimeIndex].turnaroundTime - processes[shortestRemainingTimeIndex].burstTime;
+                completedProcesses++;
+            }
+        }
+    }
+
+    printf("\nShortest Remaining Time First (SRTF) Scheduling\n");
+    printf("Process  Arrival Time  Burst Time  Waiting Time  Turnaround Time\n");
+    for (int i = 0; i < n; ++i) {
+        printf("   %d           %d            %d          %d              %d\n",
+               processes[i].id, processes[i].arrivalTime, processes[i].burstTime,
+               processes[i].waitingTime, processes[i].turnaroundTime);
+    }
+}
+
+void fcfs(struct Process processes[], int n) {
+    int currentTime = 0;
+
+    for (int i = 0; i < n; ++i) {
+        if (currentTime < processes[i].arrivalTime) {
+            currentTime = processes[i].arrivalTime;
+        }
+        processes[i].startTime = currentTime;
+        currentTime += processes[i].burstTime;
+        processes[i].completionTime = currentTime;
+        processes[i].turnaroundTime = processes[i].completionTime - processes[i].arrivalTime;
+        processes[i].waitingTime = processes[i].turnaroundTime - processes[i].burstTime;
+    }
+
+    printf("\nFirst Come First Served (FCFS) Scheduling\n");
+    printf("Process  Arrival Time  Burst Time  Waiting Time  Turnaround Time\n");
+    for (int i = 0; i < n; ++i) {
+        printf("   %d           %d            %d          %d              %d\n",
+               processes[i].id, processes[i].arrivalTime, processes[i].burstTime,
+               processes[i].waitingTime, processes[i].turnaroundTime);
+    }
+}
+
+int main() {
+    int n;
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    struct Process processes[n];
+
+    for (int i = 0; i < n; ++i) {
+        processes[i].id = i + 1;
+        printf("Enter arrival time and burst time for process %d: ", i + 1);
+        scanf("%d %d", &processes[i].arrivalTime, &processes[i].burstTime);
+        processes[i].remainingTime = processes[i].burstTime;
+        processes[i].startTime = -1; // Initialize start time for SRTF
+        processes[i].completionTime = 0; // Initialize completion time for FCFS
+        processes[i].waitingTime = 0;
+        processes[i].turnaroundTime = 0;
+    }
+
+    srtf(processes, n);
+    fcfs(processes, n);
+
+    return 0;
+}
