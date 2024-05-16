@@ -1,0 +1,83 @@
+26.	Consider the order of request for cylinder access of the disk is - (98, 183, 37, 122, 14, 124, 65, 67) and current position of Read/Write head is: 53. Find the total head movements to access the data on the cylinder using following disk scheduling algorithms:
+1)	SSTF
+2)	C SCAN
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define NUM_REQUESTS 8
+#define CYLINDERS 200
+
+// Function to calculate the total head movements using SSTF algorithm
+int sstf(int requests[], int head_position) {
+    int total_head_movements = 0;
+    int current_position = head_position;
+    bool visited[NUM_REQUESTS] = {false};
+
+    for (int i = 0; i < NUM_REQUESTS; i++) {
+        int min_distance = CYLINDERS + 1;
+        int min_index = -1;
+        for (int j = 0; j < NUM_REQUESTS; j++) {
+            if (!visited[j]) {
+                int distance = abs(requests[j] - current_position);
+                if (distance < min_distance) {
+                    min_distance = distance;
+                    min_index = j;
+                }
+            }
+        }
+        visited[min_index] = true;
+        total_head_movements += min_distance;
+        current_position = requests[min_index];
+    }
+
+    return total_head_movements;
+}
+
+// Function to calculate the total head movements using C-SCAN algorithm
+int cscan(int requests[], int head_position) {
+    int total_head_movements = 0;
+    int current_position = head_position;
+
+    // Sort requests in ascending order
+    for (int i = 0; i < NUM_REQUESTS - 1; i++) {
+        for (int j = 0; j < NUM_REQUESTS - i - 1; j++) {
+            if (requests[j] > requests[j + 1]) {
+                int temp = requests[j];
+                requests[j] = requests[j + 1];
+                requests[j + 1] = temp;
+            }
+        }
+    }
+
+    // Find the index of the first request greater than the current position
+    int index = 0;
+    while (index < NUM_REQUESTS && requests[index] < current_position) {
+        index++;
+    }
+
+    // Calculate total head movements considering C-SCAN
+    if (index == NUM_REQUESTS) {
+        // If all requests are less than current position, head moves to the end and scans back to the beginning
+        total_head_movements = CYLINDERS - current_position + requests[0];
+    } else {
+        total_head_movements = CYLINDERS - current_position + CYLINDERS - requests[index];
+    }
+
+    return total_head_movements;
+}
+
+int main() {
+    int requests[NUM_REQUESTS] = {98, 183, 37, 122, 14, 124, 65, 67};
+    int head_position = 53;
+
+    int total_head_movements_sstf = sstf(requests, head_position);
+    printf("Total head movements using SSTF: %d\n", total_head_movements_sstf);
+
+    int total_head_movements_cscan = cscan(requests, head_position);
+    printf("Total head movements using C-SCAN: %d\n", total_head_movements_cscan);
+
+    return 0;
+}
