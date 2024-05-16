@@ -1,0 +1,38 @@
+2.	Write a shell script program for different arithmetic functions.
+
+# Function to perform addition
+addition() {
+    sum=$(($1 + $2))
+    echo "Sum of $1 and $2 is: $sum"
+}
+
+# Function to perform subtraction
+subtraction() {
+    diff=$(($1 - $2))
+    echo "Difference of $1 and $2 is: $diff"
+}
+
+# Function to perform multiplication
+multiplication() {
+    product=$(($1 * $2))
+    echo "Product of $1 and $2 is: $product"
+}
+
+# Function to perform division
+division() {
+    if [ $2 -ne 0 ]; then
+        quotient=$(($1 / $2))
+        echo "Quotient of $1 divided by $2 is: $quotient"
+    else
+        echo "Error: Division by zero is not allowed"
+    fi
+}
+
+# Main script
+num1=10
+num2=5
+
+addition $num1 $num2
+subtraction $num1 $num2
+multiplication $num1 $num2
+division $num1 $num2
