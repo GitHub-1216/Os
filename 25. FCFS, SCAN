@@ -1,0 +1,85 @@
+25.	Consider the order of request for cylinder access of the disk is - (98, 183, 37, 122, 14, 124, 65, 67) and current position of Read/Write head is: 53. Find the total head movements to access the data on the cylinder using following disk scheduling algorithms:
+1)	FCFS
+2)	SCAN
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define NUM_REQUESTS 8
+#define CYLINDERS 200
+
+// Function to calculate the total head movements using FCFS algorithm
+int fcfs(int requests[], int head_position) {
+    int total_head_movements = 0;
+    int current_position = head_position;
+
+    for (int i = 0; i < NUM_REQUESTS; i++) {
+        total_head_movements += abs(requests[i] - current_position);
+        current_position = requests[i];
+    }
+
+    return total_head_movements;
+}
+
+// Function to sort the requests in ascending order
+void sort_requests(int requests[], int head_position, bool direction) {
+    for (int i = 0; i < NUM_REQUESTS - 1; i++) {
+        for (int j = 0; j < NUM_REQUESTS - i - 1; j++) {
+            if (direction) { // Moving towards higher cylinders
+                if (requests[j] > requests[j + 1]) {
+                    int temp = requests[j];
+                    requests[j] = requests[j + 1];
+                    requests[j + 1] = temp;
+                }
+            } else { // Moving towards lower cylinders
+                if (requests[j] < requests[j + 1]) {
+                    int temp = requests[j];
+                    requests[j] = requests[j + 1];
+                    requests[j + 1] = temp;
+                }
+            }
+        }
+    }
+}
+
+// Function to calculate the total head movements using SCAN algorithm
+int scan(int requests[], int head_position, bool direction) {
+    int total_head_movements = 0;
+    int current_position = head_position;
+
+    sort_requests(requests, head_position, direction);
+
+    if (direction) { // Moving towards higher cylinders
+        for (int i = 0; i < NUM_REQUESTS; i++) {
+            if (requests[i] >= current_position) {
+                total_head_movements += abs(requests[i] - current_position);
+                current_position = requests[i];
+            }
+        }
+        total_head_movements += CYLINDERS - current_position - 1;
+    } else { // Moving towards lower cylinders
+        for (int i = 0; i < NUM_REQUESTS; i++) {
+            if (requests[i] <= current_position) {
+                total_head_movements += abs(requests[i] - current_position);
+                current_position = requests[i];
+            }
+        }
+        total_head_movements += current_position;
+    }
+
+    return total_head_movements;
+}
+
+int main() {
+    int requests[NUM_REQUESTS] = {98, 183, 37, 122, 14, 124, 65, 67};
+    int head_position = 53;
+
+    int total_head_movements_fcfs = fcfs(requests, head_position);
+    printf("Total head movements using FCFS: %d\n", total_head_movements_fcfs);
+
+    int total_head_movements_scan_fwd = scan(requests, head_position, true);
+    printf("Total head movements using SCAN (Forward): %d\n", total_head_movements_scan_fwd);
+
+    return 0;
+}
