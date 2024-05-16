@@ -1,0 +1,61 @@
+3.	Write a shell script program for a number to check whether it is
+1.	palindrome
+2.	prime
+3.	generate Fibonacci series
+
+#!/bin/bash
+
+# Function to check if a number is palindrome
+is_palindrome() {
+    num=$1
+    reverse_num=$(echo $num | rev)
+    if [ $num -eq $reverse_num ]; then
+        echo "$num is a palindrome"
+    else
+        echo "$num is not a palindrome"
+    fi
+}
+
+# Function to check if a number is prime
+is_prime() {
+    num=$1
+    is_prime=1
+    if [ $num -le 1 ]; then
+        is_prime=0
+    else
+        for ((i=2; i*i<=num; i++)); do
+            if [ $((num%i)) -eq 0 ]; then
+                is_prime=0
+                break
+            fi
+        done
+    fi
+
+    if [ $is_prime -eq 1 ]; then
+        echo "$num is a prime number"
+    else
+        echo "$num is not a prime number"
+    fi
+}
+
+# Function to generate Fibonacci series
+fibonacci_series() {
+    n=$1
+    a=0
+    b=1
+    echo "Fibonacci series up to $n terms:"
+    for ((i=0; i<n; i++)); do
+        echo -n "$a "
+        fn=$((a + b))
+        a=$b
+        b=$fn
+    done
+    echo
+}
+
+# Main script
+number=121
+is_palindrome $number
+is_prime $number
+fibonacci_series 10
+
