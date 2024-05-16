@@ -1,0 +1,86 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_PAGES 20
+#define MAX_FRAMES 3
+
+int pageReference[MAX_PAGES] = {7, 1, 0, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1};
+int pageFrames[MAX_FRAMES];
+int pageFaultsFIFO = 0;
+int pageFaultsOptimal = 0;
+int currentPageFIFO = 0; // Index to track current page for FIFO algorithm
+
+// Function to initialize page frames
+void initializePageFrames() {
+    for (int i = 0; i < MAX_FRAMES; i++) {
+        pageFrames[i] = -1; // Initialize all frames to -1 indicating they are empty
+    }
+}
+
+// Function to check if a page is present in the page frames
+bool isPagePresent(int page) {
+    for (int i = 0; i < MAX_FRAMES; i++) {
+        if (pageFrames[i] == page) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to perform FIFO page replacement algorithm
+void fifoPageReplacement() {
+    initializePageFrames();
+
+    for (int i = 0; i < MAX_PAGES; i++) {
+        if (!isPagePresent(pageReference[i])) {
+            pageFrames[currentPageFIFO] = pageReference[i];
+            currentPageFIFO = (currentPageFIFO + 1) % MAX_FRAMES; // Move to the next frame using circular queue
+            pageFaultsFIFO++;
+        }
+    }
+}
+
+// Function to find the index of the page that will be used furthest in the future
+int findOptimalIndex(int start) {
+    int farthest = -1;
+    int farthestIndex = -1;
+    for (int i = 0; i < MAX_FRAMES; i++) {
+        int j;
+        for (j = start; j < MAX_PAGES; j++) {
+            if (pageReference[j] == pageFrames[i]) {
+                if (j > farthest) {
+                    farthest = j;
+                    farthestIndex = i;
+                }
+                break;
+            }
+        }
+        if (j == MAX_PAGES) {
+            return i; // If the page is not referenced again, return its index
+        }
+    }
+    return farthestIndex;
+}
+
+// Function to perform Optimal page replacement algorithm
+void optimalPageReplacement() {
+    initializePageFrames();
+
+    for (int i = 0; i < MAX_PAGES; i++) {
+        if (!isPagePresent(pageReference[i])) {
+            int optimalIndex = findOptimalIndex(i + 1);
+            pageFrames[optimalIndex] = pageReference[i];
+            pageFaultsOptimal++;
+        }
+    }
+}
+
+int main() {
+    fifoPageReplacement();
+    printf("Total number of page faults using FIFO algorithm: %d\n", pageFaultsFIFO);
+
+    optimalPageReplacement();
+    printf("Total number of page faults using Optimal algorithm: %d\n", pageFaultsOptimal);
+
+    return 0;
+}
