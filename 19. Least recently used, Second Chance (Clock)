@@ -1,0 +1,96 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_PAGES 20
+#define MAX_FRAMES 3
+
+int pageReference[MAX_PAGES] = {7, 1, 0, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1};
+int pageFrames[MAX_FRAMES];
+bool referenceBit[MAX_FRAMES];
+int pageFaultsLRU = 0;
+int pageFaultsSecondChance = 0;
+
+// Function to initialize page frames and reference bits
+void initializePageFrames() {
+    for (int i = 0; i < MAX_FRAMES; i++) {
+        pageFrames[i] = -1; // Initialize all frames to -1 indicating they are empty
+        referenceBit[i] = false; // Initialize all reference bits to false
+    }
+}
+
+// Function to check if a page is present in the page frames
+bool isPagePresent(int page) {
+    for (int i = 0; i < MAX_FRAMES; i++) {
+        if (pageFrames[i] == page) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to find the index of the least recently used page
+int findLRUIndex() {
+    int minIndex = 0;
+    for (int i = 1; i < MAX_FRAMES; i++) {
+        if (referenceBit[i] < referenceBit[minIndex]) {
+            minIndex = i;
+        }
+    }
+    return minIndex;
+}
+
+// Function to perform Least Recently Used (LRU) page replacement algorithm
+void lruPageReplacement() {
+    initializePageFrames();
+
+    int timeCounter = 0;
+    for (int i = 0; i < MAX_PAGES; i++) {
+        timeCounter++;
+        if (!isPagePresent(pageReference[i])) {
+            int lruIndex = findLRUIndex();
+            pageFrames[lruIndex] = pageReference[i];
+            referenceBit[lruIndex] = timeCounter;
+            pageFaultsLRU++;
+        } else {
+            for (int j = 0; j < MAX_FRAMES; j++) {
+                if (pageFrames[j] == pageReference[i]) {
+                    referenceBit[j] = timeCounter;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Function to perform Second Chance page replacement algorithm
+void secondChancePageReplacement() {
+    initializePageFrames();
+
+    int hand = 0;
+    for (int i = 0; i < MAX_PAGES; i++) {
+        if (!isPagePresent(pageReference[i])) {
+            while (true) {
+                if (!referenceBit[hand]) {
+                    pageFrames[hand] = pageReference[i];
+                    referenceBit[hand] = true;
+                    hand = (hand + 1) % MAX_FRAMES;
+                    pageFaultsSecondChance++;
+                    break;
+                } else {
+                    referenceBit[hand] = false;
+                    hand = (hand + 1) % MAX_FRAMES;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    lruPageReplacement();
+    printf("Total number of page faults using Least Recently Used (LRU) algorithm: %d\n", pageFaultsLRU);
+
+    secondChancePageReplacement();
+    printf("Total number of page faults using Second Chance algorithm: %d\n", pageFaultsSecondChance);
+
+    return 0;
+}
