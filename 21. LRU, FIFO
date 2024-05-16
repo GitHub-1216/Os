@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define NUM_FRAMES 3
+#define NUM_PAGES 20
+
+// Function to find the index of the page that was least recently used
+int find_lru_index(int frames[], int lru[], int frame_size) {
+    int min_lru_index = 0;
+    for (int i = 1; i < frame_size; i++) {
+        if (lru[i] < lru[min_lru_index]) {
+            min_lru_index = i;
+        }
+    }
+    return min_lru_index;
+}
+
+// Function to find the index of the oldest page in the frames
+int find_oldest_index(int frames[], int oldest[], int frame_size) {
+    int oldest_index = 0;
+    for (int i = 1; i < frame_size; i++) {
+        if (oldest[i] < oldest[oldest_index]) {
+            oldest_index = i;
+        }
+    }
+    return oldest_index;
+}
+
+// Least Recently Used (LRU) Algorithm
+int lru(int page_references[]) {
+    int frames[NUM_FRAMES] = { -1 };
+    int lru[NUM_FRAMES] = { 0 };
+    int page_faults = 0;
+
+    for (int i = 0; i < NUM_PAGES; i++) {
+        bool page_found = false;
+        for (int j = 0; j < NUM_FRAMES; j++) {
+            if (frames[j] == page_references[i]) {
+                page_found = true;
+                lru[j] = i;
+                break;
+            }
+        }
+        if (!page_found) {
+            page_faults++;
+            int lru_index = find_lru_index(frames, lru, NUM_FRAMES);
+            frames[lru_index] = page_references[i];
+            lru[lru_index] = i;
+        }
+    }
+
+    return page_faults;
+}
+
+// First-In-First-Out (FIFO) Algorithm
+int fifo(int page_references[]) {
+    int frames[NUM_FRAMES] = { -1 };
+    int oldest[NUM_FRAMES] = { 0 };
+    int page_faults = 0;
+    int oldest_page_index = 0;
+
+    for (int i = 0; i < NUM_PAGES; i++) {
+        bool page_found = false;
+        for (int j = 0; j < NUM_FRAMES; j++) {
+            if (frames[j] == page_references[i]) {
+                page_found = true;
+                break;
+            }
+        }
+        if (!page_found) {
+            page_faults++;
+            if (oldest_page_index == NUM_FRAMES) {
+                oldest_page_index = find_oldest_index(frames, oldest, NUM_FRAMES);
+                frames[oldest_page_index] = page_references[i];
+                oldest[oldest_page_index] = 0;
+            } else {
+                frames[oldest_page_index] = page_references[i];
+                oldest[oldest_page_index] = oldest_page_index + 1;
+                oldest_page_index++;
+            }
+        }
+    }
+
+    return page_faults;
+}
+
+int main() {
+    int page_references[NUM_PAGES] = {7, 1, 0, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1};
+
+    int lru_faults = lru(page_references);
+    int fifo_faults = fifo(page_references);
+
+    printf("Total page faults using LRU algorithm: %d\n", lru_faults);
+    printf("Total page faults using FIFO algorithm: %d\n", fifo_faults);
+
+    return 0;
+}
