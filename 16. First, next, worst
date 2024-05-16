@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define NUM_BLOCKS 5
+#define NUM_PROCESSES 4
+
+int blockSize[NUM_BLOCKS] = {100, 500, 200, 300, 600};
+int processSize[NUM_PROCESSES] = {212, 417, 112, 426};
+int allocation[NUM_PROCESSES];
+
+// Function to perform First Fit memory allocation
+void firstFit() {
+    for (int i = 0; i < NUM_PROCESSES; i++) {
+        for (int j = 0; j < NUM_BLOCKS; j++) {
+            if (blockSize[j] >= processSize[i]) {
+                allocation[i] = j;
+                blockSize[j] -= processSize[i];
+                break;
+            }
+        }
+    }
+}
+
+// Function to perform Next Fit memory allocation
+void nextFit() {
+    int lastAllocated = 0;
+    for (int i = 0; i < NUM_PROCESSES; i++) {
+        for (int j = lastAllocated; j < NUM_BLOCKS; j++) {
+            if (blockSize[j] >= processSize[i]) {
+                allocation[i] = j;
+                blockSize[j] -= processSize[i];
+                lastAllocated = j;
+                break;
+            }
+        }
+    }
+}
+
+// Function to perform Worst Fit memory allocation
+void worstFit() {
+    for (int i = 0; i < NUM_PROCESSES; i++) {
+        int worstIndex = -1;
+        for (int j = 0; j < NUM_BLOCKS; j++) {
+            if (blockSize[j] >= processSize[i]) {
+                if (worstIndex == -1 || blockSize[j] > blockSize[worstIndex]) {
+                    worstIndex = j;
+                }
+            }
+        }
+        if (worstIndex != -1) {
+            allocation[i] = worstIndex;
+            blockSize[worstIndex] -= processSize[i];
+        }
+    }
+}
+
+// Function to display the allocation results
+void displayAllocation(const char *strategy) {
+    printf("Allocation using %s strategy:\n", strategy);
+    printf("Process No.\tProcess Size\tBlock No.\n");
+    for (int i = 0; i < NUM_PROCESSES; i++) {
+        printf("P%d\t\t%d\t\t%d\n", i, processSize[i], allocation[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    firstFit();
+    displayAllocation("First Fit");
+
+    nextFit();
+    displayAllocation("Next Fit");
+
+    worstFit();
+    displayAllocation("Worst Fit");
+
+    return 0;
+}
