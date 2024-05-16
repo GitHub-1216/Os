@@ -63,3 +63,174 @@ int main() {
 
     return 0;
 }
+_________________________________________________________________
+
+Reader-writer
+
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+#define NUM_READERS 5
+#define NUM_WRITERS 5
+#define NUM_ITERATIONS 5
+
+sem_t mutex, wrt;
+int read_count = 0;
+
+void *reader(void *arg) {
+    int reader_id = *((int *) arg);
+    for (int i = 0; i < NUM_ITERATIONS; i++) {
+        sem_wait(&mutex);
+        read_count++;
+        if (read_count == 1) {
+            sem_wait(&wrt);
+        }
+        sem_post(&mutex);
+
+        // Reading Section
+        printf("Reader %d is reading\n", reader_id);
+
+        sem_wait(&mutex);
+        read_count--;
+        if (read_count == 0) {
+            sem_post(&wrt);
+        }
+        sem_post(&mutex);
+    }
+}
+
+void *writer(void *arg) {
+    int writer_id = *((int *) arg);
+    for (int i = 0; i < NUM_ITERATIONS; i++) {
+        sem_wait(&wrt);
+
+        // Writing Section
+        printf("Writer %d is writing\n", writer_id);
+
+        sem_post(&wrt);
+    }
+}
+
+int main() {
+    pthread_t readers[NUM_READERS], writers[NUM_WRITERS];
+    int reader_ids[NUM_READERS], writer_ids[NUM_WRITERS];
+
+    sem_init(&mutex, 0, 1);
+    sem_init(&wrt, 0, 1);
+
+    for (int i = 0; i < NUM_READERS; i++) {
+        reader_ids[i] = i + 1;
+        pthread_create(&readers[i], NULL, reader, &reader_ids[i]);
+    }
+    for (int i = 0; i < NUM_WRITERS; i++) {
+        writer_ids[i] = i + 1;
+        pthread_create(&writers[i], NULL, writer, &writer_ids[i]);
+    }
+
+    for (int i = 0; i < NUM_READERS; i++) {
+        pthread_join(readers[i], NULL);
+    }
+    for (int i = 0; i < NUM_WRITERS; i++) {
+        pthread_join(writers[i], NULL);
+    }
+
+    sem_destroy(&mutex);
+    sem_destroy(&wrt);
+
+    return 0;
+}
+________________________________________________________________________________________
+
+dinning philosopher
+
+
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+
+#define NUM_PHILOSOPHERS 5
+#define THINKING 0
+#define HUNGRY 1
+#define EATING 2
+#define LEFT (philosopher + 4) % NUM_PHILOSOPHERS
+#define RIGHT (philosopher + 1) % NUM_PHILOSOPHERS
+
+int state[NUM_PHILOSOPHERS];
+pthread_mutex_t mutex;
+pthread_cond_t condition[NUM_PHILOSOPHERS];
+
+void *philosopher_action(void *arg);
+void pickup_forks(int philosopher);
+void return_forks(int philosopher);
+void test(int philosopher);
+
+int main() {
+    pthread_t philosophers[NUM_PHILOSOPHERS];
+    int ids[NUM_PHILOSOPHERS];
+
+    pthread_mutex_init(&mutex, NULL);
+    for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
+        pthread_cond_init(&condition[i], NULL);
+    }
+
+    for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
+        ids[i] = i;
+        pthread_create(&philosophers[i], NULL, philosopher_action, &ids[i]);
+    }
+
+    for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
+        pthread_join(philosophers[i], NULL);
+    }
+
+    pthread_mutex_destroy(&mutex);
+    for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
+        pthread_cond_destroy(&condition[i]);
+    }
+
+    return 0;
+}
+
+void *philosopher_action(void *arg) {
+    int philosopher = *(int *)arg;
+    int counter = 0;
+    
+    while (counter < 5) {
+        usleep(100000); // Thinking
+        pickup_forks(philosopher);
+        usleep(100000); // Eating
+        return_forks(philosopher);
+        counter++;
+    }
+    
+    return NULL;
+}
+
+void pickup_forks(int philosopher) {
+    pthread_mutex_lock(&mutex);
+    state[philosopher] = HUNGRY;
+    printf("Philosopher %d is hungry\n", philosopher + 1);
+    test(philosopher);
+    while (state[philosopher] != EATING) {
+        pthread_cond_wait(&condition[philosopher], &mutex);
+    }
+    pthread_mutex_unlock(&mutex);
+}
+
+void return_forks(int philosopher) {
+    pthread_mutex_lock(&mutex);
+    state[philosopher] = THINKING;
+    printf("Philosopher %d is thinking\n", philosopher + 1);
+    test(LEFT);
+    test(RIGHT);
+    pthread_mutex_unlock(&mutex);
+}
+
+void test(int philosopher) {
+    if (state[philosopher] == HUNGRY && state[LEFT] != EATING && state[RIGHT] != EATING) {
+        state[philosopher] = EATING;
+        printf("Philosopher %d is eating\n", philosopher + 1);
+        pthread_cond_signal(&condition[philosopher]);
+    }
+}
+___________________________________________________________________________________________________
